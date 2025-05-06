@@ -35,18 +35,22 @@ def create_table(cursor):
 def fetch_crypto_data():
     cache_key = 'crypto_data'
     cached_data = r.get(cache_key)
+    CACHE_TTL = 60
 
     if cached_data:
         print('Cached data')
         return json.loads(cached_data)
     
     print('Requesting info from CoinGecko')
-    response = requests.get(COINGECKO_URL, params=PARAMS, timeout=6)
-    data = response.json()
-
-    r.setex(cache_key, 60, json.dumps(data))
-
-    return data
+    try:
+        response = requests.get(COINGECKO_URL, params=PARAMS, timeout=6)
+        response.raise_for_status()
+        data = response.json()
+        r.setex(cache_key, CACHE_TTL, json.dumps(data))
+        return data
+    except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+        print(f'The error is {e}')
+        return []
 
 
 def insert_data(cursor, data):
@@ -78,8 +82,9 @@ def main():
     create_table(cursor)
 
     data = fetch_crypto_data()
-    insert_data(cursor, data)
-    conn.commit()
+    if data:
+        insert_data(cursor, data)
+        conn.commit()
 
     print_all_coins(cursor)
 
