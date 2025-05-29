@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 DB_NAME = "crypto.db"
 
@@ -21,6 +22,8 @@ def create_table(cursor):
 
 def insert_data(cursor, data):
     for coin in data:
+        last_updated = datetime.fromisoformat(coin['last_updated'].replace('Z', ''))
+
         cursor.execute("""
         INSERT OR REPLACE INTO coins (id, name, symbol, current_price, market_cap, last_updated)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -30,7 +33,7 @@ def insert_data(cursor, data):
             coin['symbol'],
             coin['current_price'],
             coin['market_cap'],
-            coin['last_updated']
+            last_updated.strftime('%Y-%m-%d %H:%M:%S'),
         ))
 
 
@@ -39,3 +42,7 @@ def print_all_coins(cursor):
     rows = cursor.fetchall()
     for row in rows:
         print(row)
+
+
+def clear_table(cursor):
+    cursor.execute('DELETE FROM coins')
