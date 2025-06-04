@@ -19,6 +19,12 @@ def create_table(cursor):
     )
     """)
 
+    cursor.execute("""CREATE TABLE IF NOT EXISTS price_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        coin_id TEXT NOT NULL,
+        price REAL NOT NULL,
+        timestamp TEXT NOT NULL)""")
+
 
 def insert_data(cursor, data):
     for coin in data:
@@ -36,12 +42,31 @@ def insert_data(cursor, data):
             last_updated.strftime('%Y-%m-%d %H:%M:%S'),
         ))
 
+        cursor.execute("""INSERT INTO price_history (coin_id, price, timestamp)
+        VALUES (?, ?, ?)""", (
+            coin['id'],
+            coin['current_price'],
+            last_updated.strftime('%Y-%m-%d %H:%M:%S')
+        ))
+
+
+def get_price_history(cursor, coin_id):
+    cursor.execute("""
+    SELECT timestamp, price FROM price_history
+    WHERE coin_id = ?
+    ORDER BY timestamp
+    """, (coin_id,))
+    return cursor.fetchall()
+
 
 def print_all_coins(cursor):
     cursor.execute("SELECT * FROM coins")
     rows = cursor.fetchall()
-    for row in rows:
-        print(row)
+    if rows:
+        for row in rows:
+            print(row)
+        return len(rows)
+    return 0
 
 
 def clear_table(cursor):
