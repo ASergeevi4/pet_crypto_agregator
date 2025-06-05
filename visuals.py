@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import os
 
 def plot_prices(data):
     names = [coin['name'] for coin in data]
@@ -14,7 +15,7 @@ def plot_prices(data):
     plt.tight_layout()
     plt.show()
 
-def plot_price_history(coin_id, history):
+def plot_price_history(coin_id, history, save_path=None):
     if not history:
         print('No price history available')
         return None
@@ -29,4 +30,9 @@ def plot_price_history(coin_id, history):
         plt.xticks(rotation=45)
         plt.grid(True)
         plt.tight_layout()
-        plt.show()
+        if save_path:
+            full_path = os.path.abspath(save_path)
+            plt.savefig(full_path)
+            print(f'Price history saved to {full_path}')
+        else:
+            plt.show()
